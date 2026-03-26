@@ -79,7 +79,8 @@ tally_groups → { [groupId]: Group }
 - `ADD_MEMBER`, `REMOVE_MEMBER`
 - `ADD_EXPENSE`, `EDIT_EXPENSE`, `DELETE_EXPENSE`
 - `ADD_SETTLEMENT`, `DELETE_SETTLEMENT`
-- `IMPORT_GROUP` (from URL, triggers overwrite prompt)
+- `IMPORT_GROUP` (from URL, new group)
+- `MERGE_GROUP` (from URL, union merge with existing group)
 
 ### Undo/Redo
 
@@ -114,8 +115,13 @@ interface History {
 1. Detect hash on route load
 2. Decode base64url → decompress with pako → parse JSON
 3. Check if group ID exists in localStorage
-4. If exists → prompt: "You already have this group. Replace with the shared version?"
-5. Save to localStorage, strip hash, redirect to `/group/:id`
+4. If new → import directly
+5. If exists → union merge:
+   - Members: union by ID, prefer incoming name
+   - Expenses/settlements: union by ID; same ID with different content → conflict
+   - No conflicts → merge silently
+   - Has conflicts → show conflict resolution modal (pick "Mine" or "Theirs" per item)
+6. Save to localStorage, strip hash, redirect to `/group/:id`
 
 ## Balance Calculation & Debt Simplification
 

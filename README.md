@@ -9,6 +9,7 @@ A mobile-first expense splitting app (Splitwise clone) built as a static PWA. Cr
 - **Balance tracking** — Per-member balances with greedy debt simplification
 - **Settlements** — Record payments between members to settle debts
 - **URL sharing** — Share groups via pako-compressed URL hashes (no server needed)
+- **Smart merging** — Union merge when importing shared groups, with conflict resolution for divergent edits
 - **Undo/Redo** — Full history stack for all actions
 - **Offline support** — PWA with service worker for offline use
 - **iOS/Android installable** — Add to home screen as a standalone app
@@ -47,9 +48,11 @@ src/
 │   ├── AppShell.tsx          # Top-level layout with header + undo/redo
 │   ├── CreateGroupModal.tsx  # Modal for creating new groups
 │   ├── GroupLayout.tsx       # Group view layout with bottom tabs
-│   └── ImportHandler.tsx     # URL hash import with duplicate detection
+│   ├── ImportHandler.tsx     # URL hash import with union merge
+│   └── MergeConflictModal.tsx # Conflict resolution UI for divergent edits
 ├── lib/              # Utilities
 │   ├── balance.ts            # Balance calculation + debt simplification
+│   ├── merge.ts              # Union merge logic for shared groups
 │   ├── format.ts             # Currency formatting (PHP centavos)
 │   ├── id.ts                 # nanoid wrapper
 │   ├── sharing.ts            # Pako compress/decompress + URL building
@@ -83,6 +86,9 @@ All amounts are stored in **centavos** (integer) to avoid floating-point issues.
 
 1. Group data is JSON-serialized and compressed with pako (deflate)
 2. Compressed bytes are base64url-encoded into the URL hash
-3. Recipients opening the URL auto-import the group (or are prompted if it already exists)
+3. Recipients opening the URL get a smart union merge:
+   - **New group** — imported directly
+   - **Existing group, no conflicts** — silently merged (additions from both sides combined)
+   - **Existing group, conflicts** — a conflict resolution modal lets the user pick "Mine" or "Theirs" per item
 
 No server is involved — the entire group state travels in the URL.

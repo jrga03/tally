@@ -1,75 +1,88 @@
-# React + TypeScript + Vite
+# Tally
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A mobile-first expense splitting app (Splitwise clone) built as a static PWA. Create groups, split expenses, track balances, and share via compressed URLs — all without a backend.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Groups** — Create groups with multiple members
+- **Expense splitting** — Equal, exact amount, or percentage-based splits
+- **Balance tracking** — Per-member balances with greedy debt simplification
+- **Settlements** — Record payments between members to settle debts
+- **URL sharing** — Share groups via pako-compressed URL hashes (no server needed)
+- **Undo/Redo** — Full history stack for all actions
+- **Offline support** — PWA with service worker for offline use
+- **iOS/Android installable** — Add to home screen as a standalone app
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+- React 19 + TypeScript 5.9
+- Vite 8 (with React Compiler)
+- Mantine 8 (UI components)
+- react-router-dom 7
+- pako (compression for URL sharing)
+- nanoid (ID generation)
+- vite-plugin-pwa (service worker + manifest)
 
-Note: This will impact Vite dev & build performances.
+## Getting Started
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Scripts
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start dev server |
+| `npm run build` | Type-check and build for production |
+| `npm run preview` | Preview production build locally |
+| `npm run lint` | Run ESLint |
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Project Structure
+
 ```
+src/
+├── components/       # Shared UI components
+│   ├── AppShell.tsx          # Top-level layout with header + undo/redo
+│   ├── CreateGroupModal.tsx  # Modal for creating new groups
+│   ├── GroupLayout.tsx       # Group view layout with bottom tabs
+│   └── ImportHandler.tsx     # URL hash import with duplicate detection
+├── lib/              # Utilities
+│   ├── balance.ts            # Balance calculation + debt simplification
+│   ├── format.ts             # Currency formatting (PHP centavos)
+│   ├── id.ts                 # nanoid wrapper
+│   ├── sharing.ts            # Pako compress/decompress + URL building
+│   └── storage.ts            # localStorage persistence
+├── pages/            # Route pages
+│   ├── AddExpensePage.tsx     # Add expense with split options
+│   ├── ExpenseListPage.tsx    # Chronological expense/settlement list
+│   ├── GroupDashboardPage.tsx # Balances + simplified debts
+│   ├── HomePage.tsx           # Group list + create
+│   └── SettleUpPage.tsx       # Record settlements
+├── state/            # State management
+│   ├── actions.ts            # Action type definitions
+│   ├── context.tsx           # React Context + AppProvider
+│   ├── history.ts            # Undo/redo history stack
+│   └── reducer.ts            # App state reducer
+├── types.ts          # Shared TypeScript interfaces
+├── App.tsx           # Route definitions
+└── main.tsx          # Entry point with providers
+```
+
+## Data Model
+
+All amounts are stored in **centavos** (integer) to avoid floating-point issues. The UI converts to/from pesos for display and input.
+
+- **Group** — contains members, expenses, and settlements
+- **Expense** — amount paid by one member, split among selected members
+- **Settlement** — direct payment from one member to another
+- **Split** — how much each member owes for an expense
+
+## How Sharing Works
+
+1. Group data is JSON-serialized and compressed with pako (deflate)
+2. Compressed bytes are base64url-encoded into the URL hash
+3. Recipients opening the URL auto-import the group (or are prompted if it already exists)
+
+No server is involved — the entire group state travels in the URL.

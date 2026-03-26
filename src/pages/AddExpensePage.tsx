@@ -2,7 +2,7 @@ import { Container, Title, TextInput, NumberInput, Select, SegmentedControl, Che
 import { DateInput } from '@mantine/dates'
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useApp } from '../state/context'
+import { useApp } from '../state/useApp'
 import { generateId } from '../lib/id'
 import type { Split } from '../types'
 

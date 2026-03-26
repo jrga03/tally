@@ -1,7 +1,7 @@
 import { Modal, TextInput, Button, Stack, ActionIcon, Group } from '@mantine/core'
 import { IconTrash } from '@tabler/icons-react'
 import { useState } from 'react'
-import { useApp } from '../state/context'
+import { useApp } from '../state/useApp'
 import { generateId } from '../lib/id'
 import { useNavigate } from 'react-router-dom'
 

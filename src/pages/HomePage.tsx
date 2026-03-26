@@ -2,7 +2,7 @@ import { Container, Title, Text, Button, Card, Stack, Group } from '@mantine/cor
 import { IconPlus } from '@tabler/icons-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useApp } from '../state/context'
+import { useApp } from '../state/useApp'
 import { CreateGroupModal } from '../components/CreateGroupModal'
 
 export function HomePage() {

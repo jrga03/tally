@@ -1,22 +1,12 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
-import { appReducer, type AppState } from './reducer'
+import { useState, useCallback, type ReactNode } from 'react'
+import { appReducer } from './reducer'
 import type { Action } from './actions'
-import { createHistory, pushState, undo as undoHistory, redo as redoHistory, type HistoryState } from './history'
+import { createHistory, pushState, undo as undoHistory, redo as redoHistory } from './history'
 import { loadGroups, saveGroups } from '../lib/storage'
-
-interface AppContextValue {
-  state: AppState
-  dispatch: (action: Action) => void
-  undo: () => void
-  redo: () => void
-  canUndo: boolean
-  canRedo: boolean
-}
-
-const AppContext = createContext<AppContextValue | null>(null)
+import { AppContext } from './AppContext'
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [history, setHistory] = useState<HistoryState>(() => createHistory(loadGroups()))
+  const [history, setHistory] = useState(() => createHistory(loadGroups()))
 
   const dispatch = useCallback((action: Action) => {
     setHistory(prev => {
@@ -55,10 +45,4 @@ export function AppProvider({ children }: { children: ReactNode }) {
       {children}
     </AppContext.Provider>
   )
-}
-
-export function useApp(): AppContextValue {
-  const ctx = useContext(AppContext)
-  if (!ctx) throw new Error('useApp must be used within AppProvider')
-  return ctx
 }

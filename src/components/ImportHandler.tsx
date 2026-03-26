@@ -1,20 +1,19 @@
 import { useEffect, useState } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { Modal, Text, Group, Button } from '@mantine/core'
 import { decompressGroup } from '../lib/sharing'
-import { useApp } from '../state/context'
+import { useApp } from '../state/useApp'
 import type { Group as GroupType } from '../types'
 
 export function ImportHandler() {
-  const location = useLocation()
   const navigate = useNavigate()
   const { id } = useParams()
   const { state, dispatch } = useApp()
   const [pendingGroup, setPendingGroup] = useState<GroupType | null>(null)
   const [showPrompt, setShowPrompt] = useState(false)
+  const [hash] = useState(() => window.location.hash.slice(1))
 
   useEffect(() => {
-    const hash = location.hash.slice(1)
     if (!hash) return
 
     try {
@@ -29,7 +28,8 @@ export function ImportHandler() {
     } catch {
       // Invalid hash, ignore
     }
-  }, []) // Only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hash])
 
   const handleReplace = () => {
     if (!pendingGroup) return

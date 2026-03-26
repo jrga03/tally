@@ -1,7 +1,7 @@
 import { Container, Title, Select, NumberInput, Button, Stack } from '@mantine/core'
 import { useState } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
-import { useApp } from '../state/context'
+import { useApp } from '../state/useApp'
 import { generateId } from '../lib/id'
 
 export function SettleUpPage() {

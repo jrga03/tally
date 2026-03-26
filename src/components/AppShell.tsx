@@ -1,7 +1,7 @@
 import { AppShell as MantineAppShell, Group, Title, ActionIcon } from '@mantine/core'
 import { IconArrowBackUp, IconArrowForwardUp } from '@tabler/icons-react'
 import { Outlet, useParams } from 'react-router-dom'
-import { useApp } from '../state/context'
+import { useApp } from '../state/useApp'
 
 export function AppShell() {
   const { undo, redo, canUndo, canRedo } = useApp()

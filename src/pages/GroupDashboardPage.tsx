@@ -1,7 +1,7 @@
 import { Container, Title, Text, Card, Stack, Group, Button, Badge } from '@mantine/core'
 import { IconShare, IconCash } from '@tabler/icons-react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useApp } from '../state/context'
+import { useApp } from '../state/useApp'
 import { calculateBalances, simplifyDebts } from '../lib/balance'
 import { copyShareUrl } from '../lib/sharing'
 import { formatPHP } from '../lib/format'

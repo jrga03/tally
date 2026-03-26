@@ -10,6 +10,7 @@ export function appReducer(state: AppState, action: Action): AppState {
       return { ...state, [action.payload.id]: action.payload }
 
     case 'DELETE_GROUP': {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [action.payload.groupId]: _, ...rest } = state
       return rest
     }

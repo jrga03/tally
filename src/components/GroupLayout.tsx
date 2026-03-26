@@ -25,7 +25,7 @@ export function GroupLayout() {
           else if (value === 'expenses') navigate(`/group/${id}/expenses`)
           else if (value === 'add') navigate(`/group/${id}/add-expense`)
         }}
-        style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100 }}
+        style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100, background: 'var(--mantine-color-body)' }}
       >
         <Tabs.List grow>
           <Tabs.Tab value="dashboard" leftSection={<IconDashboard size={16} />}>

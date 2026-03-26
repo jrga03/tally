@@ -8,7 +8,7 @@ export function AppShell() {
   const { id } = useParams()
 
   return (
-    <MantineAppShell header={{ height: 56 }}>
+    <MantineAppShell header={{ height: 56 }} styles={{ root: { minHeight: '100dvh' }, main: { minHeight: '100dvh' } }}>
       <MantineAppShell.Header>
         <Group h="100%" px="md" justify="space-between">
           <Title order={3}>Tally</Title>

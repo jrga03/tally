@@ -1,12 +1,13 @@
 import { Routes, Route } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
 import { GroupLayout } from './components/GroupLayout'
+import { HomePage } from './pages/HomePage'
 
 function App() {
   return (
     <Routes>
       <Route element={<AppShell />}>
-        <Route path="/" element={<div>Home — groups list</div>} />
+        <Route path="/" element={<HomePage />} />
         <Route path="/group/:id" element={<GroupLayout />}>
           <Route index element={<div>Dashboard</div>} />
           <Route path="expenses" element={<div>Expenses</div>} />

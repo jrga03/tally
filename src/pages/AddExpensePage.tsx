@@ -1,5 +1,5 @@
-import { Container, Title, TextInput, NumberInput, Select, SegmentedControl, Checkbox, Button, Stack, Group } from '@mantine/core'
-import { DateInput } from '@mantine/dates'
+import { Container, Title, Text, TextInput, NumberInput, Select, SegmentedControl, Checkbox, Button, Stack, Group } from '@mantine/core'
+import { DatePickerInput } from '@mantine/dates'
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useApp } from '../state/useApp'
@@ -107,7 +107,7 @@ export function AddExpensePage() {
           value={paidBy}
           onChange={setPaidBy}
         />
-        <DateInput label="Date" value={date} onChange={v => setDate(typeof v === 'string' ? new Date(v) : v)} />
+        <DatePickerInput label="Date" value={date} onChange={setDate} />
 
         <SegmentedControl
           value={splitMethod}
@@ -119,39 +119,38 @@ export function AddExpensePage() {
           ]}
         />
 
-        <Checkbox.Group label="Split among">
-          <Stack mt="xs">
-            {group.members.map(m => (
-              <Group key={m.id} justify="space-between">
-                <Checkbox
-                  label={m.name}
-                  checked={selectedMembers.has(m.id)}
-                  onChange={() => toggleMember(m.id)}
+        <Text fw={500} size="sm">Split among</Text>
+        <Stack gap="xs">
+          {group.members.map(m => (
+            <Group key={m.id} justify="space-between">
+              <Checkbox
+                label={m.name}
+                checked={selectedMembers.has(m.id)}
+                onChange={() => toggleMember(m.id)}
+              />
+              {splitMethod === 'exact' && selectedMembers.has(m.id) && (
+                <NumberInput
+                  size="xs"
+                  w={100}
+                  placeholder="₱0.00"
+                  value={exactAmounts[m.id] ?? ''}
+                  onChange={v => setExactAmounts(prev => ({ ...prev, [m.id]: v }))}
+                  decimalScale={2}
                 />
-                {splitMethod === 'exact' && selectedMembers.has(m.id) && (
-                  <NumberInput
-                    size="xs"
-                    w={100}
-                    placeholder="₱0.00"
-                    value={exactAmounts[m.id] ?? ''}
-                    onChange={v => setExactAmounts(prev => ({ ...prev, [m.id]: v }))}
-                    decimalScale={2}
-                  />
-                )}
-                {splitMethod === 'percentage' && selectedMembers.has(m.id) && (
-                  <NumberInput
-                    size="xs"
-                    w={80}
-                    placeholder="%"
-                    value={percentages[m.id] ?? ''}
-                    onChange={v => setPercentages(prev => ({ ...prev, [m.id]: v }))}
-                    suffix="%"
-                  />
-                )}
-              </Group>
-            ))}
-          </Stack>
-        </Checkbox.Group>
+              )}
+              {splitMethod === 'percentage' && selectedMembers.has(m.id) && (
+                <NumberInput
+                  size="xs"
+                  w={80}
+                  placeholder="%"
+                  value={percentages[m.id] ?? ''}
+                  onChange={v => setPercentages(prev => ({ ...prev, [m.id]: v }))}
+                  suffix="%"
+                />
+              )}
+            </Group>
+          ))}
+        </Stack>
 
         <Button onClick={handleSubmit}>Add Expense</Button>
       </Stack>

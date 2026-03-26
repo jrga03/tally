@@ -4,6 +4,8 @@ import { GroupLayout } from './components/GroupLayout'
 import { HomePage } from './pages/HomePage'
 import { GroupDashboardPage } from './pages/GroupDashboardPage'
 import { AddExpensePage } from './pages/AddExpensePage'
+import { ExpenseListPage } from './pages/ExpenseListPage'
+import { SettleUpPage } from './pages/SettleUpPage'
 
 function App() {
   return (
@@ -12,9 +14,9 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/group/:id" element={<GroupLayout />}>
           <Route index element={<GroupDashboardPage />} />
-          <Route path="expenses" element={<div>Expenses</div>} />
+          <Route path="expenses" element={<ExpenseListPage />} />
           <Route path="add-expense" element={<AddExpensePage />} />
-          <Route path="settle" element={<div>Settle Up</div>} />
+          <Route path="settle" element={<SettleUpPage />} />
         </Route>
       </Route>
     </Routes>

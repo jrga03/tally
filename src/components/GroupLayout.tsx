@@ -1,6 +1,7 @@
 import { Tabs } from '@mantine/core'
 import { IconDashboard, IconReceipt, IconPlus } from '@tabler/icons-react'
 import { Outlet, useNavigate, useLocation, useParams } from 'react-router-dom'
+import { ImportHandler } from './ImportHandler'
 
 export function GroupLayout() {
   const navigate = useNavigate()
@@ -15,6 +16,7 @@ export function GroupLayout() {
 
   return (
     <>
+      <ImportHandler />
       <Outlet />
       <Tabs
         value={getTab()}

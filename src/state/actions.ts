@@ -11,3 +11,4 @@ export type Action =
   | { type: 'ADD_SETTLEMENT'; payload: { groupId: string; settlement: Settlement } }
   | { type: 'DELETE_SETTLEMENT'; payload: { groupId: string; settlementId: string } }
   | { type: 'IMPORT_GROUP'; payload: Group }
+  | { type: 'MERGE_GROUP'; payload: Group }

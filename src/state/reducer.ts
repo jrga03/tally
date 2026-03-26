@@ -7,6 +7,7 @@ export function appReducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'CREATE_GROUP':
     case 'IMPORT_GROUP':
+    case 'MERGE_GROUP':
       return { ...state, [action.payload.id]: action.payload }
 
     case 'DELETE_GROUP': {

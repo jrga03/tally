@@ -4,10 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useApp } from '../state/context'
 import { calculateBalances, simplifyDebts } from '../lib/balance'
 import { copyShareUrl } from '../lib/sharing'
-
-function formatPHP(centavos: number): string {
-  return `₱${(centavos / 100).toFixed(2)}`
-}
+import { formatPHP } from '../lib/format'
 
 export function GroupDashboardPage() {
   const { id } = useParams<{ id: string }>()

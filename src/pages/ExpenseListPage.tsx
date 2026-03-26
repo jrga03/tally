@@ -2,10 +2,7 @@ import { Container, Title, Text, Card, Stack, Group, Badge, ActionIcon, Menu } f
 import { IconDots, IconTrash } from '@tabler/icons-react'
 import { useParams } from 'react-router-dom'
 import { useApp } from '../state/context'
-
-function formatPHP(centavos: number): string {
-  return `₱${(centavos / 100).toFixed(2)}`
-}
+import { formatPHP } from '../lib/format'
 
 export function ExpenseListPage() {
   const { id } = useParams<{ id: string }>()

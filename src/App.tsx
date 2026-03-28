@@ -4,6 +4,7 @@ import { GroupLayout } from './components/GroupLayout'
 import { HomePage } from './pages/HomePage'
 import { GroupDashboardPage } from './pages/GroupDashboardPage'
 import { AddExpensePage } from './pages/AddExpensePage'
+import { EditExpensePage } from './pages/EditExpensePage'
 import { ExpenseListPage } from './pages/ExpenseListPage'
 import { SettleUpPage } from './pages/SettleUpPage'
 
@@ -16,6 +17,7 @@ function App() {
           <Route index element={<GroupDashboardPage />} />
           <Route path="expenses" element={<ExpenseListPage />} />
           <Route path="add-expense" element={<AddExpensePage />} />
+          <Route path="expense/:expenseId/edit" element={<EditExpensePage />} />
           <Route path="settle" element={<SettleUpPage />} />
         </Route>
       </Route>

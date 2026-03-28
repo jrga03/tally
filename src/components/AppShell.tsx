@@ -1,17 +1,24 @@
-import { AppShell as MantineAppShell, Group, Title, ActionIcon } from '@mantine/core'
-import { IconArrowBackUp, IconArrowForwardUp } from '@tabler/icons-react'
+import { AppShell as MantineAppShell, Group, Title, ActionIcon, useMantineColorScheme, useComputedColorScheme } from '@mantine/core'
+import { IconArrowBackUp, IconArrowForwardUp, IconSun, IconMoon } from '@tabler/icons-react'
 import { Outlet, useParams } from 'react-router-dom'
 import { useApp } from '../state/useApp'
 
 export function AppShell() {
   const { undo, redo, canUndo, canRedo } = useApp()
   const { id } = useParams()
+  const { toggleColorScheme } = useMantineColorScheme()
+  const computedColorScheme = useComputedColorScheme('light')
 
   return (
     <MantineAppShell header={{ height: 56 }} styles={{ root: { minHeight: '100dvh' }, main: { minHeight: '100dvh' } }}>
       <MantineAppShell.Header>
         <Group h="100%" px="md" justify="space-between">
-          <Title order={3}>Tally</Title>
+          <Group gap="xs">
+            <Title order={3}>Tally</Title>
+            <ActionIcon variant="subtle" onClick={toggleColorScheme}>
+              {computedColorScheme === 'dark' ? <IconSun size={20} /> : <IconMoon size={20} />}
+            </ActionIcon>
+          </Group>
           {id && (
             <Group gap="xs">
               <ActionIcon variant="subtle" disabled={!canUndo} onClick={undo}>

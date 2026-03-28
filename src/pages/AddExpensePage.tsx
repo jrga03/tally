@@ -1,4 +1,5 @@
 import { Container, Title, Text, TextInput, NumberInput, Select, SegmentedControl, Checkbox, Button, Stack, Group } from '@mantine/core'
+import { notifications } from '@mantine/notifications'
 import { DatePickerInput } from '@mantine/dates'
 import dayjs from 'dayjs'
 import { useState } from 'react'
@@ -76,7 +77,23 @@ export function AddExpensePage() {
 
   const handleSubmit = () => {
     const splits = buildSplits()
-    if (!splits || !paidBy || !description.trim() || !date) return
+    if (!splits) {
+      if (splitMethod === 'exact') {
+        const amountCentavos = typeof amount === 'number' ? Math.round(amount * 100) : 0
+        const members = group.members.filter(m => selectedMembers.has(m.id))
+        const total = members.reduce((sum, m) => sum + Math.round(Number(exactAmounts[m.id] || 0) * 100), 0)
+        if (amountCentavos > 0 && total !== amountCentavos) {
+          const diff = (total - amountCentavos) / 100
+          notifications.show({
+            color: 'red',
+            title: 'Split amounts don\u2019t match',
+            message: `The split total is \u20b1${(total / 100).toFixed(2)} but the expense is \u20b1${(amountCentavos / 100).toFixed(2)} (${diff > 0 ? '+' : ''}\u20b1${diff.toFixed(2)})`,
+          })
+        }
+      }
+      return
+    }
+    if (!paidBy || !description.trim() || !date) return
 
     dispatch({
       type: 'ADD_EXPENSE',

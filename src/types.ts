@@ -20,6 +20,7 @@ export interface Expense {
   splits: Split[];
   date: string;
   createdAt: string;
+  notes?: string;
 }
 
 export interface Split {

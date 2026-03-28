@@ -1,5 +1,6 @@
 import { Container, Title, Text, TextInput, NumberInput, Select, SegmentedControl, Checkbox, Button, Stack, Group } from '@mantine/core'
 import { DatePickerInput } from '@mantine/dates'
+import dayjs from 'dayjs'
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useApp } from '../state/useApp'
@@ -23,7 +24,7 @@ export function AddExpensePage() {
   )
   const [exactAmounts, setExactAmounts] = useState<Record<string, number | string>>({})
   const [percentages, setPercentages] = useState<Record<string, number | string>>({})
-  const [date, setDate] = useState<Date | null>(new Date())
+  const [date, setDate] = useState<string | null>(dayjs().format('YYYY-MM-DD'))
 
   if (!group) return <Container py="md">Group not found.</Container>
 
@@ -87,7 +88,7 @@ export function AddExpensePage() {
           amount: Math.round((typeof amount === 'number' ? amount : 0) * 100),
           paidBy,
           splits,
-          date: date.toISOString(),
+          date: new Date(date).toISOString(),
           createdAt: new Date().toISOString(),
         },
       },

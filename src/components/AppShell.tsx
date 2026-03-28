@@ -1,6 +1,6 @@
 import { AppShell as MantineAppShell, Group, Title, ActionIcon, useMantineColorScheme, useComputedColorScheme } from '@mantine/core'
-import { IconArrowBackUp, IconArrowForwardUp, IconSun, IconMoon } from '@tabler/icons-react'
-import { Outlet, useParams } from 'react-router-dom'
+import { IconArrowBackUp, IconArrowForwardUp, IconArrowLeft, IconSun, IconMoon } from '@tabler/icons-react'
+import { Link, Outlet, useParams } from 'react-router-dom'
 import { useApp } from '../state/useApp'
 
 export function AppShell() {
@@ -14,7 +14,14 @@ export function AppShell() {
       <MantineAppShell.Header>
         <Group h="100%" px="md" justify="space-between">
           <Group gap="xs">
-            <Title order={3}>Tally</Title>
+            {id && (
+              <ActionIcon variant="subtle" component={Link} to="/">
+                <IconArrowLeft size={20} />
+              </ActionIcon>
+            )}
+            <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+              <Title order={3}>Tally</Title>
+            </Link>
             <ActionIcon variant="subtle" onClick={toggleColorScheme}>
               {computedColorScheme === 'dark' ? <IconSun size={20} /> : <IconMoon size={20} />}
             </ActionIcon>

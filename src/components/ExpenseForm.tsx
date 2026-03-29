@@ -40,6 +40,9 @@ export function ExpenseForm({ members, initialData, onSubmit, submitLabel }: Exp
     initialData ? dayjs(initialData.date).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD')
   )
   const [notes, setNotes] = useState(initialData?.notes ?? '')
+  const [sharedAmount, setSharedAmount] = useState<number | string>(
+    initialData?.exactSplitMeta ? initialData.exactSplitMeta.sharedAmount / 100 : ''
+  )
   const remainingCentavos = (() => {
     if (splitMethod !== 'exact') return null
     const totalCentavos = typeof amount === 'number' ? Math.round(amount * 100) : 0
@@ -48,8 +51,9 @@ export function ExpenseForm({ members, initialData, onSubmit, submitLabel }: Exp
     const individualTotal = members
       .filter(m => selectedMembers.has(m.id))
       .reduce((sum, m) => sum + Math.round(Number(exactAmounts[m.id] || 0) * 100), 0)
+    const sharedCentavos = Math.round(Number(sharedAmount || 0) * 100)
 
-    return totalCentavos - individualTotal
+    return totalCentavos - individualTotal - sharedCentavos
   })()
 
   const toggleMember = (memberId: string) => {
@@ -197,6 +201,24 @@ export function ExpenseForm({ members, initialData, onSubmit, submitLabel }: Exp
           </Group>
         ))}
       </Stack>
+
+      {splitMethod === 'exact' && (
+        <Stack gap="xs">
+          <NumberInput
+            label="Shared by all"
+            placeholder="₱0.00"
+            value={sharedAmount}
+            onChange={v => setSharedAmount(v)}
+            min={0}
+            decimalScale={2}
+          />
+          {typeof sharedAmount === 'number' && sharedAmount > 0 && selectedMembers.size > 0 && (
+            <Text size="xs" c="dimmed">
+              ₱{(sharedAmount / selectedMembers.size).toFixed(2)} each across {selectedMembers.size} member{selectedMembers.size !== 1 ? 's' : ''}
+            </Text>
+          )}
+        </Stack>
+      )}
 
       <Textarea
         label="Notes"

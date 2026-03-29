@@ -27,15 +27,30 @@ export function ExpenseForm({ members, initialData, onSubmit, submitLabel }: Exp
       : new Set(members.map(m => m.id))
   )
   const [exactAmounts, setExactAmounts] = useState<Record<string, number | string>>(
-    initialData && initialData.splits.length > 0
-      ? Object.fromEntries(initialData.splits.map(s => [s.memberId, s.amount / 100]))
-      : {}
+    initialData?.exactSplitMeta
+      ? Object.fromEntries(
+          Object.entries(initialData.exactSplitMeta.individualAmounts).map(([id, centavos]) => [id, centavos / 100])
+        )
+      : initialData && initialData.splits.length > 0
+        ? Object.fromEntries(initialData.splits.map(s => [s.memberId, s.amount / 100]))
+        : {}
   )
   const [percentages, setPercentages] = useState<Record<string, number | string>>({})
   const [date, setDate] = useState<string | null>(
     initialData ? dayjs(initialData.date).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD')
   )
   const [notes, setNotes] = useState(initialData?.notes ?? '')
+  const remainingCentavos = (() => {
+    if (splitMethod !== 'exact') return null
+    const totalCentavos = typeof amount === 'number' ? Math.round(amount * 100) : 0
+    if (totalCentavos <= 0) return null
+
+    const individualTotal = members
+      .filter(m => selectedMembers.has(m.id))
+      .reduce((sum, m) => sum + Math.round(Number(exactAmounts[m.id] || 0) * 100), 0)
+
+    return totalCentavos - individualTotal
+  })()
 
   const toggleMember = (memberId: string) => {
     setSelectedMembers(prev => {
@@ -134,6 +149,21 @@ export function ExpenseForm({ members, initialData, onSubmit, submitLabel }: Exp
           { label: '%', value: 'percentage' },
         ]}
       />
+
+      {remainingCentavos !== null && (
+        <Text
+          size="sm"
+          fw={600}
+          c={remainingCentavos === 0 ? 'green' : remainingCentavos < 0 ? 'red' : 'yellow'}
+          ta="center"
+        >
+          {remainingCentavos === 0
+            ? 'Fully allocated'
+            : remainingCentavos > 0
+              ? `₱${(remainingCentavos / 100).toFixed(2)} remaining`
+              : `₱${(Math.abs(remainingCentavos) / 100).toFixed(2)} over`}
+        </Text>
+      )}
 
       <Text fw={500} size="sm">Split among</Text>
       <Stack gap="xs">

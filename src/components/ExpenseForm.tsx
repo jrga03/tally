@@ -3,7 +3,7 @@ import { IconTrash, IconEdit } from '@tabler/icons-react'
 import { notifications } from '@mantine/notifications'
 import { DatePickerInput } from '@mantine/dates'
 import dayjs from 'dayjs'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { generateId } from '../lib/id'
 import { splitEqual } from '../lib/splitEqual'
 import type { Expense, Split, Member, SubGroupEntry } from '../types'
@@ -15,6 +15,90 @@ interface ExpenseFormProps {
   initialData?: Expense
   onSubmit: (expense: Omit<Expense, 'id' | 'createdAt'>) => void
   submitLabel: string
+}
+
+interface SubGroupModalProps {
+  opened: boolean
+  onClose: () => void
+  editingSubGroup: SubGroupEntry | null
+  members: Member[]
+  selectedMembers: Set<string>
+  onSave: (entry: SubGroupEntry) => void
+}
+
+function SubGroupModal({ opened, onClose, editingSubGroup, members, selectedMembers, onSave }: SubGroupModalProps) {
+  const [label, setLabel] = useState(editingSubGroup?.label ?? '')
+  const [sgAmount, setSgAmount] = useState<number | string>(
+    editingSubGroup ? editingSubGroup.amount / 100 : ''
+  )
+  const [sgMembers, setSgMembers] = useState<Set<string>>(
+    new Set(editingSubGroup?.memberIds ?? [])
+  )
+
+  const toggleSgMember = (memberId: string) => {
+    setSgMembers(prev => {
+      const next = new Set(prev)
+      if (next.has(memberId)) next.delete(memberId)
+      else next.add(memberId)
+      return next
+    })
+  }
+
+  const handleSave = () => {
+    const amountCentavos = typeof sgAmount === 'number' ? Math.round(sgAmount * 100) : 0
+    if (amountCentavos <= 0 || sgMembers.size === 0) return
+    onSave({
+      id: editingSubGroup?.id ?? generateId(),
+      amount: amountCentavos,
+      memberIds: Array.from(sgMembers),
+      label: label.trim() || undefined,
+    })
+  }
+
+  return (
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title={editingSubGroup ? 'Edit shared split' : 'Add shared split'}
+      size="sm"
+    >
+      <Stack>
+        <TextInput
+          label="Label (optional)"
+          placeholder="e.g. Appetizer"
+          value={label}
+          onChange={e => setLabel(e.currentTarget.value)}
+        />
+        <NumberInput
+          label="Amount (₱)"
+          placeholder="₱0.00"
+          value={sgAmount}
+          onChange={setSgAmount}
+          min={0}
+          decimalScale={2}
+        />
+        <Text fw={500} size="sm">Split among</Text>
+        <Stack gap="xs">
+          {members.filter(m => selectedMembers.has(m.id)).map(m => (
+            <Checkbox
+              key={m.id}
+              label={m.name}
+              checked={sgMembers.has(m.id)}
+              onChange={() => toggleSgMember(m.id)}
+            />
+          ))}
+        </Stack>
+        {typeof sgAmount === 'number' && sgAmount > 0 && sgMembers.size > 0 && (
+          <Text size="xs" c="dimmed">
+            ₱{(sgAmount / sgMembers.size).toFixed(2)} each across {sgMembers.size} member{sgMembers.size !== 1 ? 's' : ''}
+          </Text>
+        )}
+        <Button onClick={handleSave}>
+          {editingSubGroup ? 'Save' : 'Add'}
+        </Button>
+      </Stack>
+    </Modal>
+  )
 }
 
 export function ExpenseForm({ members, initialData, onSubmit, submitLabel }: ExpenseFormProps) {
@@ -50,8 +134,9 @@ export function ExpenseForm({ members, initialData, onSubmit, submitLabel }: Exp
     initialData?.exactSplitMeta?.subGroups ?? []
   )
   const [modalOpen, setModalOpen] = useState(false)
+  const [modalKey, setModalKey] = useState(0)
   const [editingSubGroup, setEditingSubGroup] = useState<SubGroupEntry | null>(null)
-  const remainingCentavos = (() => {
+  const remainingCentavos = useMemo(() => {
     if (splitMethod !== 'exact') return null
     const totalCentavos = typeof amount === 'number' ? Math.round(amount * 100) : 0
     if (totalCentavos <= 0) return null
@@ -63,7 +148,7 @@ export function ExpenseForm({ members, initialData, onSubmit, submitLabel }: Exp
     const subGroupTotal = subGroups.reduce((sum, sg) => sum + sg.amount, 0)
 
     return totalCentavos - individualTotal - sharedCentavos - subGroupTotal
-  })()
+  }, [splitMethod, amount, members, selectedMembers, exactAmounts, sharedAmount, subGroups])
 
   const toggleMember = (memberId: string) => {
     setSelectedMembers(prev => {
@@ -76,11 +161,13 @@ export function ExpenseForm({ members, initialData, onSubmit, submitLabel }: Exp
 
   const openAddSubGroup = () => {
     setEditingSubGroup(null)
+    setModalKey(k => k + 1)
     setModalOpen(true)
   }
 
   const openEditSubGroup = (sg: SubGroupEntry) => {
     setEditingSubGroup(sg)
+    setModalKey(k => k + 1)
     setModalOpen(true)
   }
 
@@ -207,81 +294,6 @@ export function ExpenseForm({ members, initialData, onSubmit, submitLabel }: Exp
       notes: notes.trim() || undefined,
       exactSplitMeta,
     })
-  }
-
-  const SubGroupModal = () => {
-    const [label, setLabel] = useState(editingSubGroup?.label ?? '')
-    const [sgAmount, setSgAmount] = useState<number | string>(
-      editingSubGroup ? editingSubGroup.amount / 100 : ''
-    )
-    const [sgMembers, setSgMembers] = useState<Set<string>>(
-      new Set(editingSubGroup?.memberIds ?? [])
-    )
-
-    const toggleSgMember = (memberId: string) => {
-      setSgMembers(prev => {
-        const next = new Set(prev)
-        if (next.has(memberId)) next.delete(memberId)
-        else next.add(memberId)
-        return next
-      })
-    }
-
-    const handleSave = () => {
-      const amountCentavos = typeof sgAmount === 'number' ? Math.round(sgAmount * 100) : 0
-      if (amountCentavos <= 0 || sgMembers.size === 0) return
-      handleSaveSubGroup({
-        id: editingSubGroup?.id ?? generateId(),
-        amount: amountCentavos,
-        memberIds: Array.from(sgMembers),
-        label: label.trim() || undefined,
-      })
-    }
-
-    return (
-      <Modal
-        opened={modalOpen}
-        onClose={() => { setModalOpen(false); setEditingSubGroup(null) }}
-        title={editingSubGroup ? 'Edit shared split' : 'Add shared split'}
-        size="sm"
-      >
-        <Stack>
-          <TextInput
-            label="Label (optional)"
-            placeholder="e.g. Appetizer"
-            value={label}
-            onChange={e => setLabel(e.currentTarget.value)}
-          />
-          <NumberInput
-            label="Amount (₱)"
-            placeholder="₱0.00"
-            value={sgAmount}
-            onChange={setSgAmount}
-            min={0}
-            decimalScale={2}
-          />
-          <Text fw={500} size="sm">Split among</Text>
-          <Stack gap="xs">
-            {members.filter(m => selectedMembers.has(m.id)).map(m => (
-              <Checkbox
-                key={m.id}
-                label={m.name}
-                checked={sgMembers.has(m.id)}
-                onChange={() => toggleSgMember(m.id)}
-              />
-            ))}
-          </Stack>
-          {typeof sgAmount === 'number' && sgAmount > 0 && sgMembers.size > 0 && (
-            <Text size="xs" c="dimmed">
-              ₱{(sgAmount / sgMembers.size).toFixed(2)} each across {sgMembers.size} member{sgMembers.size !== 1 ? 's' : ''}
-            </Text>
-          )}
-          <Button onClick={handleSave}>
-            {editingSubGroup ? 'Save' : 'Add'}
-          </Button>
-        </Stack>
-      </Modal>
-    )
   }
 
   return (
@@ -422,7 +434,15 @@ export function ExpenseForm({ members, initialData, onSubmit, submitLabel }: Exp
         maxRows={6}
       />
 
-      <SubGroupModal />
+      <SubGroupModal
+        key={modalKey}
+        opened={modalOpen}
+        onClose={() => { setModalOpen(false); setEditingSubGroup(null) }}
+        editingSubGroup={editingSubGroup}
+        members={members}
+        selectedMembers={selectedMembers}
+        onSave={handleSaveSubGroup}
+      />
       <Button onClick={handleSubmit}>{submitLabel}</Button>
     </Stack>
   )

@@ -44,6 +44,55 @@ export function calculateBalances(group: Group): Map<string, number> {
   return balances
 }
 
+export function computeRawDebts(group: Group): DebtSettlement[] {
+  // Track pairwise debts: key is "fromId->toId", value is amount
+  const pairwise = new Map<string, number>()
+
+  const addDebt = (from: string, to: string, amount: number) => {
+    // Always store in canonical direction; net opposing debts
+    const key = `${from}->${to}`
+    const reverseKey = `${to}->${from}`
+    const existing = pairwise.get(key) ?? 0
+    const reverse = pairwise.get(reverseKey) ?? 0
+
+    if (reverse > 0) {
+      // Net against the reverse direction
+      if (amount <= reverse) {
+        pairwise.set(reverseKey, reverse - amount)
+      } else {
+        pairwise.delete(reverseKey)
+        pairwise.set(key, existing + amount - reverse)
+      }
+    } else {
+      pairwise.set(key, existing + amount)
+    }
+  }
+
+  // Process expenses: each split member owes the payer their share
+  for (const expense of group.expenses) {
+    for (const split of expense.splits) {
+      if (split.memberId !== expense.paidBy) {
+        addDebt(split.memberId, expense.paidBy, split.amount)
+      }
+    }
+  }
+
+  // Process settlements: reduce debts
+  for (const settlement of group.settlements) {
+    addDebt(settlement.toMemberId, settlement.fromMemberId, settlement.amount)
+  }
+
+  const settlements: DebtSettlement[] = []
+  for (const [key, amount] of pairwise) {
+    if (amount > 0.005) {
+      const [fromMemberId, toMemberId] = key.split('->')
+      settlements.push({ fromMemberId, toMemberId, amount })
+    }
+  }
+
+  return settlements.sort((a, b) => b.amount - a.amount)
+}
+
 export function simplifyDebts(group: Group, precomputedBalances?: Map<string, number>): DebtSettlement[] {
   const balances = precomputedBalances ?? calculateBalances(group)
   const debtors: { memberId: string; amount: number }[] = []

@@ -1,8 +1,9 @@
-import { Container, Title, Text, Card, Stack, Group, Button, Badge } from '@mantine/core'
+import { useState } from 'react'
+import { Container, Title, Text, Card, Stack, Group, Button, Badge, Switch } from '@mantine/core'
 import { IconShare, IconCash } from '@tabler/icons-react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useApp } from '../state/useApp'
-import { calculateBalances, simplifyDebts } from '../lib/balance'
+import { calculateBalances, simplifyDebts, computeRawDebts } from '../lib/balance'
 import { copyShareUrl } from '../lib/sharing'
 import { formatPHP } from '../lib/format'
 
@@ -11,11 +12,11 @@ export function GroupDashboardPage() {
   const { state } = useApp()
   const navigate = useNavigate()
   const group = id ? state[id] : undefined
+  const [simplified, setSimplified] = useState(true)
 
   if (!group) return <Container py="md"><Text>Group not found.</Text></Container>
-
   const balances = calculateBalances(group)
-  const debts = simplifyDebts(group, balances)
+  const debts = simplified ? simplifyDebts(group, balances) : computeRawDebts(group)
   const getMemberName = (memberId: string) =>
     group.members.find(m => m.id === memberId)?.name ?? 'Unknown'
 
@@ -47,7 +48,15 @@ export function GroupDashboardPage() {
 
       {debts.length > 0 && (
         <>
-          <Title order={4} mb="xs">Settle Up</Title>
+          <Group justify="space-between" mb="xs">
+            <Title order={4}>Settle Up</Title>
+            <Switch
+              label="Simplify"
+              checked={simplified}
+              onChange={(e) => setSimplified(e.currentTarget.checked)}
+              size="sm"
+            />
+          </Group>
           <Stack>
             {debts.map((debt, i) => (
               <Card key={i} withBorder p="sm">

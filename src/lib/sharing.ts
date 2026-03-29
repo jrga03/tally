@@ -1,9 +1,14 @@
 import pako from 'pako'
 import type { Group } from '../types'
 
+const CHUNK_SIZE = 8192
+
 function toBase64Url(bytes: Uint8Array): string {
-  const binary = String.fromCharCode(...bytes)
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+  const chunks: string[] = []
+  for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+    chunks.push(String.fromCharCode(...bytes.subarray(i, i + CHUNK_SIZE)))
+  }
+  return btoa(chunks.join('')).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 }
 
 function fromBase64Url(str: string): Uint8Array {

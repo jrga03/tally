@@ -21,11 +21,25 @@ export interface Expense {
   date: string;
   createdAt: string;
   notes?: string;
+  exactSplitMeta?: ExactSplitMeta;
 }
 
 export interface Split {
   memberId: string;
   amount: number;
+}
+
+export interface SubGroupEntry {
+  id: string;
+  amount: number;        // centavos
+  memberIds: string[];
+  label?: string;
+}
+
+export interface ExactSplitMeta {
+  individualAmounts: Record<string, number>;  // memberId -> centavos
+  sharedAmount: number;                        // centavos
+  subGroups: SubGroupEntry[];
 }
 
 export interface Settlement {

@@ -44,8 +44,8 @@ export function calculateBalances(group: Group): Map<string, number> {
   return balances
 }
 
-export function simplifyDebts(group: Group): DebtSettlement[] {
-  const balances = calculateBalances(group)
+export function simplifyDebts(group: Group, precomputedBalances?: Map<string, number>): DebtSettlement[] {
+  const balances = precomputedBalances ?? calculateBalances(group)
   const debtors: { memberId: string; amount: number }[] = []
   const creditors: { memberId: string; amount: number }[] = []
 

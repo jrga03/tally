@@ -15,7 +15,7 @@ export function GroupDashboardPage() {
   if (!group) return <Container py="md"><Text>Group not found.</Text></Container>
 
   const balances = calculateBalances(group)
-  const debts = simplifyDebts(group)
+  const debts = simplifyDebts(group, balances)
   const getMemberName = (memberId: string) =>
     group.members.find(m => m.id === memberId)?.name ?? 'Unknown'
 

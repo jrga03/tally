@@ -5,6 +5,7 @@ import { DatePickerInput } from '@mantine/dates'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { generateId } from '../lib/id'
+import { splitEqual } from '../lib/splitEqual'
 import type { Expense, Split, Member, SubGroupEntry } from '../types'
 
 type SplitMethod = 'equal' | 'exact' | 'percentage'
@@ -112,10 +113,36 @@ export function ExpenseForm({ members, initialData, onSubmit, submitLabel }: Exp
     }
 
     if (splitMethod === 'exact') {
-      const splits = selected.map(m => ({
-        memberId: m.id,
-        amount: Math.round(Number(exactAmounts[m.id] || 0) * 100),
-      }))
+      const selectedIds = selected.map(m => m.id)
+
+      // Start with individual exact amounts
+      const totals: Record<string, number> = {}
+      for (const m of selected) {
+        totals[m.id] = Math.round(Number(exactAmounts[m.id] || 0) * 100)
+      }
+
+      // Add shared-by-all amount
+      const sharedCentavos = Math.round(Number(sharedAmount || 0) * 100)
+      if (sharedCentavos > 0) {
+        const sharedSplits = splitEqual(sharedCentavos, selectedIds)
+        for (const id of selectedIds) {
+          totals[id] += sharedSplits[id]
+        }
+      }
+
+      // Add sub-group amounts
+      for (const sg of subGroups) {
+        if (sg.amount > 0 && sg.memberIds.length > 0) {
+          const sgSplits = splitEqual(sg.amount, sg.memberIds)
+          for (const id of sg.memberIds) {
+            if (totals[id] !== undefined) {
+              totals[id] += sgSplits[id]
+            }
+          }
+        }
+      }
+
+      const splits = selected.map(m => ({ memberId: m.id, amount: totals[m.id] }))
       const total = splits.reduce((sum, s) => sum + s.amount, 0)
       if (total !== amountCentavos) return null
       return splits
@@ -140,7 +167,10 @@ export function ExpenseForm({ members, initialData, onSubmit, submitLabel }: Exp
       if (splitMethod === 'exact') {
         const amountCentavos = typeof amount === 'number' ? Math.round(amount * 100) : 0
         const selected = members.filter(m => selectedMembers.has(m.id))
-        const total = selected.reduce((sum, m) => sum + Math.round(Number(exactAmounts[m.id] || 0) * 100), 0)
+        const individualTotal = selected.reduce((sum, m) => sum + Math.round(Number(exactAmounts[m.id] || 0) * 100), 0)
+        const sharedCentavos = Math.round(Number(sharedAmount || 0) * 100)
+        const subGroupTotal = subGroups.reduce((sum, sg) => sum + sg.amount, 0)
+        const total = individualTotal + sharedCentavos + subGroupTotal
         if (amountCentavos > 0 && total !== amountCentavos) {
           const diff = (total - amountCentavos) / 100
           notifications.show({
@@ -154,6 +184,20 @@ export function ExpenseForm({ members, initialData, onSubmit, submitLabel }: Exp
     }
     if (!paidBy || !description.trim() || !date) return
 
+    const exactSplitMeta = splitMethod === 'exact' && (
+      (typeof sharedAmount === 'number' && sharedAmount > 0) || subGroups.length > 0
+    )
+      ? {
+          individualAmounts: Object.fromEntries(
+            members
+              .filter(m => selectedMembers.has(m.id))
+              .map(m => [m.id, Math.round(Number(exactAmounts[m.id] || 0) * 100)])
+          ),
+          sharedAmount: Math.round(Number(sharedAmount || 0) * 100),
+          subGroups: subGroups.filter(sg => sg.amount > 0 && sg.memberIds.length > 0),
+        }
+      : undefined
+
     onSubmit({
       description: description.trim(),
       amount: Math.round((typeof amount === 'number' ? amount : 0) * 100),
@@ -161,6 +205,7 @@ export function ExpenseForm({ members, initialData, onSubmit, submitLabel }: Exp
       splits,
       date: new Date(date).toISOString(),
       notes: notes.trim() || undefined,
+      exactSplitMeta,
     })
   }
 

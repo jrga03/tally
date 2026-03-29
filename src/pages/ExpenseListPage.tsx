@@ -95,6 +95,22 @@ export function ExpenseListPage() {
                           <Text size="sm" c="dimmed">{formatPHP(s.amount)}</Text>
                         </Group>
                       ))}
+                      {e.exactSplitMeta && (
+                        <>
+                          <Divider my="xs" />
+                          <Text size="sm" fw={500}>How it was split</Text>
+                          {e.exactSplitMeta.sharedAmount > 0 && (
+                            <Text size="xs" c="dimmed">
+                              Shared by all: {formatPHP(e.exactSplitMeta.sharedAmount)}
+                            </Text>
+                          )}
+                          {e.exactSplitMeta.subGroups.map(sg => (
+                            <Text key={sg.id} size="xs" c="dimmed">
+                              {sg.label || 'Shared split'}: {formatPHP(sg.amount)} — {sg.memberIds.map(id => getMemberName(id)).join(', ')}
+                            </Text>
+                          ))}
+                        </>
+                      )}
                       {e.notes && (
                         <>
                           <Divider my="xs" />

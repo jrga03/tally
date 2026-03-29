@@ -1,6 +1,6 @@
 import { Container, Title, Text, Card, Stack, Group, Badge, ActionIcon, Menu, Collapse, Divider } from '@mantine/core'
 import { IconDots, IconTrash, IconChevronDown, IconChevronUp, IconEdit } from '@tabler/icons-react'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useApp } from '../state/useApp'
 import { formatPHP } from '../lib/format'
@@ -27,10 +27,10 @@ export function ExpenseListPage() {
   }
 
   // Combine expenses and settlements, sort by date descending
-  const items = [
+  const items = useMemo(() => [
     ...group.expenses.map(e => ({ kind: 'expense' as const, data: e, date: e.date })),
     ...group.settlements.map(s => ({ kind: 'settlement' as const, data: s, date: s.date })),
-  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), [group.expenses, group.settlements])
 
   return (
     <Container size="xs" py="md" pb={80}>

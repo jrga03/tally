@@ -1,5 +1,7 @@
 # Exact Split: Shared Amounts Feature
 
+> **Status:** Implemented (2026-03-29)
+
 ## Summary
 
 Extend the "Exact" split mode in ExpenseForm to support shared amounts on top of per-person exact inputs. Users can specify a shared-by-all amount (split equally among all selected members) and add sub-group shared entries (split equally among a subset of members, managed via a modal).

@@ -58,3 +58,7 @@ No special handling. Editing an expense replaces it in state; balances are compu
 - `src/pages/AddExpensePage.tsx` — use ExpenseForm
 - `src/pages/ExpenseListPage.tsx` — expandable cards + edit button
 - `src/App.tsx` — add edit route
+
+## Subsequent Changes
+
+- **2026-03-29:** The Exact split mode was extended with shared-by-all amounts and sub-group shared entries. See `2026-03-29-exact-split-shared-amounts-design.md` for details. The ExpenseForm now includes additional state for shared splits, a sub-group modal, and a remaining indicator. The `Expense` type has an optional `exactSplitMeta` field. The ExpenseListPage shows shared split details in the expanded breakdown.

@@ -38,7 +38,7 @@ export function GroupDashboardPage() {
               <Group justify="space-between">
                 <Text>{member.name}</Text>
                 <Badge color={balance > 0 ? 'green' : balance < 0 ? 'red' : 'gray'}>
-                  {balance >= 0 ? '+' : ''}{formatPHP(balance)}
+                  {balance > 0 ? `gets back ${formatPHP(balance)}` : balance < 0 ? `owes ${formatPHP(Math.abs(balance))}` : 'settled up'}
                 </Badge>
               </Group>
             </Card>

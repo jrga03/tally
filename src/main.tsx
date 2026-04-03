@@ -6,8 +6,31 @@ import { Notifications } from '@mantine/notifications'
 import '@mantine/core/styles.css'
 import '@mantine/dates/styles.css'
 import '@mantine/notifications/styles.css'
+import { registerSW } from 'virtual:pwa-register'
 import { AppProvider } from './state/context'
 import App from './App.tsx'
+
+registerSW({
+  immediate: true,
+  onRegisteredSW(swUrl, registration) {
+    if (registration) {
+      setInterval(async () => {
+        if (registration.installing || !navigator) return
+        if ('connection' in navigator && !navigator.onLine) return
+
+        try {
+          const resp = await fetch(swUrl, {
+            cache: 'no-store',
+            headers: { 'cache-control': 'no-cache' },
+          })
+          if (resp?.status === 200) await registration.update()
+        } catch {
+          // fetch failed (offline, DNS, etc.) — skip this cycle
+        }
+      }, 60 * 60 * 1000) // check for updates every hour
+    }
+  },
+})
 
 const theme = createTheme({
   components: {

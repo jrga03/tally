@@ -8,7 +8,7 @@ import { cloudflare } from "@cloudflare/vite-plugin";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), babel({ presets: [reactCompilerPreset()] }), VitePWA({
-    registerType: 'autoUpdate',
+    registerType: 'prompt',
     manifest: {
       name: 'Tally',
       short_name: 'Tally',

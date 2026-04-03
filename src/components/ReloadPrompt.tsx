@@ -38,7 +38,7 @@ export function ReloadPrompt() {
         message: 'Tap to reload and get the latest version.',
         autoClose: false,
         withCloseButton: false,
-        onClick: () => updateServiceWorker(),
+        onClick: () => updateServiceWorker().then(() => window.location.reload()),
       })
     }
   }, [needRefresh, updateServiceWorker])

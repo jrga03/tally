@@ -957,7 +957,69 @@ git add -A && git commit -m "feat: add passphrase reset UI"
 
 ---
 
-### Task 21: End-to-End Testing and Polish
+### Task 21: GitHub Actions CI/CD
+
+**Files:**
+- Create: `.github/workflows/deploy.yml`
+- Remove Cloudflare Pages GitHub integration (manual step in Cloudflare dashboard)
+
+**Step 1: Disconnect Cloudflare Pages GitHub integration**
+
+In the Cloudflare dashboard, disconnect the existing Pages project from GitHub. The Worker deployment will replace it.
+
+**Step 2: Create GitHub Actions workflow**
+
+Create `.github/workflows/deploy.yml`:
+
+```yaml
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Apply D1 migrations
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          command: d1 execute tally-db --remote --file=src/server/db/schema.sql
+
+      - name: Deploy Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          command: deploy
+```
+
+**Step 3: Add GitHub secrets**
+
+In the GitHub repo settings, add:
+- `CLOUDFLARE_API_TOKEN` — a Cloudflare API token with Workers and D1 permissions
+
+**Step 4: Commit**
+
+```bash
+git add -A && git commit -m "ci: add GitHub Actions workflow for Worker + D1 deployment"
+```
+
+---
+
+### Task 22: End-to-End Testing and Polish
 
 **Files:**
 - Various
@@ -975,25 +1037,29 @@ git add -A && git commit -m "feat: add passphrase reset UI"
 
 **Step 2: Fix any issues found**
 
-**Step 3: Apply schema to production D1**
-
-```bash
-npx wrangler d1 execute tally-db --remote --file=src/server/db/schema.sql
-```
-
-**Step 4: Set JWT_SECRET as a Cloudflare secret**
+**Step 3: Set JWT_SECRET as a Cloudflare secret**
 
 ```bash
 npx wrangler secret put JWT_SECRET
 ```
 
-**Step 5: Deploy**
+**Step 4: Apply schema to production D1 (first time only — subsequent runs handled by CI)**
 
 ```bash
-npm run deploy
+npx wrangler d1 execute tally-db --remote --file=src/server/db/schema.sql
 ```
 
-**Step 6: Final commit**
+**Step 5: Push to main to trigger first CI deploy**
+
+```bash
+git push origin main
+```
+
+**Step 6: Verify production deployment**
+
+Check the GitHub Actions run completes successfully and the app is live.
+
+**Step 7: Final commit (if any fixes)**
 
 ```bash
 git add -A && git commit -m "feat: group sync — complete implementation"

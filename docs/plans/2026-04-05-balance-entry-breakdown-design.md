@@ -45,4 +45,4 @@ A single `useMemo` in the dashboard component computes a `Map<memberId, BalanceE
 - **Collapse**: Mantine `Collapse` component wraps entry list, controlled by expanded set
 - **Entry rows** (inside Collapse): `Stack` of rows, each with:
   - Left: description + date (dimmed, small text)
-  - Right: amount (color-coded by sign)
+  - Right: amount (dimmed color-coded by sign, so the badge total remains the visual focus)

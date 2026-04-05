@@ -11,6 +11,12 @@ export interface DebtSettlement {
   amount: number
 }
 
+export interface BalanceEntry {
+  description: string
+  amount: number // net effect on balance (positive = gets back, negative = owes)
+  date: string
+}
+
 export function calculateBalances(group: Group): Map<string, number> {
   const balances = new Map<string, number>()
 
@@ -42,6 +48,58 @@ export function calculateBalances(group: Group): Map<string, number> {
   }
 
   return balances
+}
+
+export function getBalanceEntries(group: Group): Map<string, BalanceEntry[]> {
+  const entriesMap = new Map<string, BalanceEntry[]>()
+
+  for (const member of group.members) {
+    entriesMap.set(member.id, [])
+  }
+
+  const getMemberName = (memberId: string) =>
+    group.members.find(m => m.id === memberId)?.name ?? 'Unknown'
+
+  for (const expense of group.expenses) {
+    for (const member of group.members) {
+      let amount = 0
+      if (expense.paidBy === member.id) {
+        amount += expense.amount
+      }
+      const split = expense.splits.find(s => s.memberId === member.id)
+      if (split) {
+        amount -= split.amount
+      }
+      if (amount !== 0) {
+        entriesMap.get(member.id)!.push({
+          description: expense.description,
+          amount,
+          date: expense.date,
+        })
+      }
+    }
+  }
+
+  for (const settlement of group.settlements) {
+    if (settlement.amount !== 0) {
+      entriesMap.get(settlement.fromMemberId)?.push({
+        description: `Paid ${getMemberName(settlement.toMemberId)}`,
+        amount: settlement.amount,
+        date: settlement.date,
+      })
+      entriesMap.get(settlement.toMemberId)?.push({
+        description: `Received from ${getMemberName(settlement.fromMemberId)}`,
+        amount: -settlement.amount,
+        date: settlement.date,
+      })
+    }
+  }
+
+  for (const [, entries] of entriesMap) {
+    entries.sort((a, b) => a.date.localeCompare(b.date))
+  }
+
+  return entriesMap
 }
 
 export function computeRawDebts(group: Group): DebtSettlement[] {

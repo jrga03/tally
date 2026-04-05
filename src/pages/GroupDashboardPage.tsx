@@ -79,10 +79,10 @@ export function GroupDashboardPage() {
                     <Group key={i} justify="space-between">
                       <div>
                         <Text size="xs">{entry.description}</Text>
-                        <Text size="xs" c="dimmed">{entry.date}</Text>
+                        <Text size="xs" c="dimmed">{new Date(entry.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</Text>
                       </div>
                       <Text size="xs" c={entry.amount > 0 ? 'green.4' : 'red.4'}>
-                        {entry.amount > 0 ? '+' : ''}{formatPHP(Math.abs(entry.amount))}
+                        {entry.amount > 0 ? '+' : '−'}{formatPHP(Math.abs(entry.amount))}
                       </Text>
                     </Group>
                   ))}

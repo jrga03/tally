@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Container, Title, Text, Card, Stack, Group, Button, Badge, Switch, Collapse } from '@mantine/core'
 import { IconShare, IconCash, IconChevronDown } from '@tabler/icons-react'
 import { useParams, useNavigate } from 'react-router-dom'
@@ -21,10 +21,7 @@ export function GroupDashboardPage() {
   const getMemberName = (memberId: string) =>
     group.members.find(m => m.id === memberId)?.name ?? 'Unknown'
 
-  const allEntries = useMemo(
-    () => getBalanceEntries(group),
-    [group.expenses, group.settlements, group.members]
-  )
+  const allEntries = getBalanceEntries(group)
 
   const toggleExpanded = (memberId: string) => {
     setExpanded(prev => {

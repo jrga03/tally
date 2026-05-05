@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest'
 import {
   calculateBalances,
   getBalanceEntries,
+  computeRawDebts,
+  simplifyDebts,
 } from './balance'
 import type { Group, Expense, Settlement } from '../types'
 
@@ -168,3 +170,144 @@ describe('getBalanceEntries', () => {
 function entries(group: Group, memberId: string) {
   return getBalanceEntries(group).get(memberId)!
 }
+
+describe('computeRawDebts', () => {
+  it('returns no debts for an empty group', () => {
+    expect(computeRawDebts(makeGroup())).toEqual([])
+  })
+
+  it('records a debt from each non-payer split member to the payer', () => {
+    const group = makeGroup({
+      expenses: [expense({
+        amount: 900, paidBy: 'a',
+        splits: [
+          { memberId: 'a', amount: 300 },
+          { memberId: 'b', amount: 300 },
+          { memberId: 'c', amount: 300 },
+        ],
+      })],
+    })
+    const debts = computeRawDebts(group)
+    expect(debts).toContainEqual({ fromMemberId: 'b', toMemberId: 'a', amount: 300 })
+    expect(debts).toContainEqual({ fromMemberId: 'c', toMemberId: 'a', amount: 300 })
+    expect(debts).toHaveLength(2)
+  })
+
+  it('nets opposing debts between the same pair', () => {
+    // a pays 600 split between a/b (b owes a 300)
+    // then b pays 400 split between a/b (a owes b 200)
+    // net: b owes a 100
+    const group = makeGroup({
+      expenses: [
+        expense({ amount: 600, paidBy: 'a',
+          splits: [{ memberId: 'a', amount: 300 }, { memberId: 'b', amount: 300 }] }),
+        expense({ amount: 400, paidBy: 'b',
+          splits: [{ memberId: 'a', amount: 200 }, { memberId: 'b', amount: 200 }] }),
+      ],
+    })
+    const debts = computeRawDebts(group)
+    expect(debts).toEqual([{ fromMemberId: 'b', toMemberId: 'a', amount: 100 }])
+  })
+
+  it('settlements reduce debts', () => {
+    const group = makeGroup({
+      expenses: [expense({
+        amount: 600, paidBy: 'a',
+        splits: [{ memberId: 'a', amount: 300 }, { memberId: 'b', amount: 300 }],
+      })],
+      settlements: [settlement({ fromMemberId: 'b', toMemberId: 'a', amount: 300 })],
+    })
+    expect(computeRawDebts(group)).toEqual([])
+  })
+
+  it('drops debts at or below the threshold (≤0.005)', () => {
+    // Construct a near-zero residual via opposing debts that don't quite cancel.
+    // Sub-threshold debts must not appear in the output.
+    const group = makeGroup({
+      expenses: [
+        expense({ amount: 1, paidBy: 'a',
+          splits: [{ memberId: 'a', amount: 0.5 }, { memberId: 'b', amount: 0.5 }] }),
+      ],
+      settlements: [settlement({ fromMemberId: 'b', toMemberId: 'a', amount: 0.499 })],
+    })
+    const debts = computeRawDebts(group)
+    // 0.5 - 0.499 = 0.001, below the 0.005 threshold
+    expect(debts).toEqual([])
+  })
+
+  it('sorts debts by amount descending', () => {
+    const group = makeGroup({
+      expenses: [
+        expense({ amount: 100, paidBy: 'a',
+          splits: [{ memberId: 'a', amount: 50 }, { memberId: 'b', amount: 50 }] }),
+        expense({ amount: 1000, paidBy: 'a',
+          splits: [{ memberId: 'a', amount: 500 }, { memberId: 'c', amount: 500 }] }),
+      ],
+    })
+    const amounts = computeRawDebts(group).map(d => d.amount)
+    expect(amounts).toEqual([500, 50])
+  })
+})
+
+describe('simplifyDebts', () => {
+  it('returns no settlements for a balanced group', () => {
+    expect(simplifyDebts(makeGroup())).toEqual([])
+  })
+
+  it('produces at most N-1 settlements for N members with non-zero balance', () => {
+    // 4 members, all imbalanced
+    const group: Group = {
+      ...makeGroup(),
+      members: [
+        { id: 'a', name: 'A' }, { id: 'b', name: 'B' },
+        { id: 'c', name: 'C' }, { id: 'd', name: 'D' },
+      ],
+      expenses: [expense({
+        amount: 1200, paidBy: 'a',
+        splits: [
+          { memberId: 'a', amount: 300 }, { memberId: 'b', amount: 300 },
+          { memberId: 'c', amount: 300 }, { memberId: 'd', amount: 300 },
+        ],
+      })],
+    }
+    const settlements = simplifyDebts(group)
+    expect(settlements.length).toBeLessThanOrEqual(3)
+  })
+
+  it('settlement amounts cancel the original balances', () => {
+    const group = makeGroup({
+      expenses: [expense({
+        amount: 900, paidBy: 'a',
+        splits: [
+          { memberId: 'a', amount: 300 },
+          { memberId: 'b', amount: 300 },
+          { memberId: 'c', amount: 300 },
+        ],
+      })],
+    })
+    const balances = calculateBalances(group)
+    const settlements = simplifyDebts(group, balances)
+
+    // Apply settlements to balances and verify they all become 0.
+    const adjusted = new Map(balances)
+    for (const s of settlements) {
+      adjusted.set(s.fromMemberId, adjusted.get(s.fromMemberId)! + s.amount)
+      adjusted.set(s.toMemberId, adjusted.get(s.toMemberId)! - s.amount)
+    }
+    for (const v of adjusted.values()) {
+      expect(Math.abs(v)).toBeLessThan(0.001)
+    }
+  })
+
+  it('uses precomputedBalances if provided', () => {
+    // Pass artificial balances; should not call calculateBalances internally.
+    const group = makeGroup()
+    const balances = new Map<string, number>([
+      ['a', 100], ['b', -100],
+    ])
+    const settlements = simplifyDebts(group, balances)
+    expect(settlements).toEqual([
+      { fromMemberId: 'b', toMemberId: 'a', amount: 100 },
+    ])
+  })
+})

@@ -1,4 +1,5 @@
 import { Modal, Button, Group, Stack, Text } from '@mantine/core'
+import { notifications } from '@mantine/notifications'
 import { useApp } from '../state/useApp'
 import type { Group as GroupType } from '../types'
 
@@ -8,12 +9,34 @@ interface Props {
 }
 
 export function DeleteGroupModal({ group, onClose }: Props) {
-  const { dispatch } = useApp()
+  const { dispatch, undo } = useApp()
 
   const handleDelete = () => {
     if (!group) return
+    const deletedName = group.name
     dispatch({ type: 'DELETE_GROUP', payload: { groupId: group.id } })
     onClose()
+
+    const id = notifications.show({
+      message: (
+        <Group justify="space-between" wrap="nowrap" gap="sm">
+          <Text size="sm">
+            Group <strong>{deletedName}</strong> deleted
+          </Text>
+          <Button
+            size="compact-xs"
+            variant="subtle"
+            onClick={() => {
+              undo()
+              notifications.hide(id)
+            }}
+          >
+            Undo
+          </Button>
+        </Group>
+      ),
+      autoClose: 5000,
+    })
   }
 
   return (
